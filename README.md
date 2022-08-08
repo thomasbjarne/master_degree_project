@@ -1,3 +1,3 @@
 # master_thesis
 
-# Goal: create a modular FV solver / FV library
+Current goal: create a modular FV solver / FV library
