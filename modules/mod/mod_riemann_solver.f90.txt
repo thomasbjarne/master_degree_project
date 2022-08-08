@@ -1,0 +1,54 @@
+module mod_riemann_solver
+
+    use mod_linalg
+    implicit none
+
+contains
+
+    pure function rs_linsys_1d(q_l, q_r, A) result(q)
+
+        real, intent(in), dimension(:) :: q_l, q_r
+        real, intent(in), dimension(:,:) :: A
+
+        real, dimension(size(A,1), size(A, 2)) :: LAMBDA, R, R_inverse, W, temp
+        real, dimension(size(A,1)) :: alpha, b, q
+        integer :: i
+
+        !we want to solve the linear system R alpha = q_l - q_r, 
+        !where R is the matrix of left eigenvectors to A.
+
+        call qr_algorithm(A, temp)  ! approximate eigenvalues
+
+        LAMBDA = 0
+        do i = 1, size(A,1)
+            LAMBDA(i,i) = temp(i,i)
+        end do
+
+        ! Next use Rayleigh_ritz to approximate eigenvectors
+
+        b = q_l - q_r
+
+        alpha = linear_system_solver(R, b)
+
+        W(:, i) = alpha(i) * R(:,i)
+
+        q = q_l + sum(H(x(i)) * W(:,i))
+
+    end function rs_linsys_1d
+
+    pure function heaviside(x) result(H)
+
+        real, intent(in) :: x
+        real, intent(out) :: H
+
+        if (x < 0) then
+            H = 0
+        else if (x > 0) then
+            H = 1
+        else
+            stop
+        end if
+
+    end function heaviside
+
+end module mod_riemann_solver
