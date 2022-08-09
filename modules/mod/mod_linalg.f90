@@ -44,7 +44,7 @@ contains
         real, intent(out), dimension(size(A,1), size(A,2)) :: Q, R
         real, dimension(size(A, 1), size(A,2)) :: ID, A_prime, Q_i
         real, dimension(:), allocatable :: u
-        integer :: i, n, m
+        integer :: i, n
 
         n = size(A,1)
 
@@ -71,6 +71,7 @@ contains
                 Q = matmul(Q, transpose(Q_i))
                 R = matmul(Q_i, R)
             end if
+
             deallocate(u)
         end do
 
@@ -79,9 +80,7 @@ contains
     pure function qr_algorithm(A) result(A_schur)
 
         real, intent(in), dimension(:,:) :: A
-        real, dimension(size(A,1), size(A,2)) :: A_schur
-
-        real, dimension(size(A,1), size(A,2)) :: A_k, Q_k, R_k
+        real, dimension(size(A,1), size(A,2)) :: A_schur, A_k, Q_k, R_k 
         integer :: i
 
         A_k = upper_hessenberg(A)
@@ -139,54 +138,43 @@ contains
         call qr_decomposition(A, Q, R)
         y = backwards_subst(R, b)
 
-        do i = 1, size(x)
-            x(i) = dot_product(Q(i,:), y)
-        end do
+        x = matmul(Q, y)
 
     end function linear_system_solver
-
-    pure function rayleigh_ritz(A) result(eig_pair)
-
-        real, intent(in), dimension(:,:) :: A
-        real, dimension(:,:), allocatable :: eig_pair, V, V_star
-
-        allocate(V(size(A,1), size(A,2)-1), V_star(size(A,1)-1, size(A,2)))
-        allocate(eig_pair(size(A,1), 2))
-
-
-    end function rayleigh_ritz
 
     pure function upper_hessenberg(A) result(H)
 
         real, intent(in), dimension(:,:) :: A
-        real, dimension(size(A,1),size(A,2)) :: H
-        real, dimension(:), allocatable :: x, v, e
-        real, dimension(:,:), allocatable :: v_transpose
+        real, dimension(size(A,1), size(A,2)) :: Q, H, ID
+        real, dimension(:), allocatable :: u
+        real :: alpha
         integer :: i, n
 
         n = size(A,1)
+
+        ID = 0
+        do i = 1, n
+            ID(i,i) = 1
+        end do
         H = A
 
         do i = 1, n-2
 
-            allocate(x(n-i), v(n-i), e(n-i), v_transpose(1,n-i))
+            allocate( u(n - i) )
 
-            e = 0
-            e(1) = 1
+            alpha = norm2( A(i+1:n,i) )
+            if (A(i+1,i) < 0) alpha = - alpha
 
-            x = A(i+1:n, i)
-            if (x(1) >= 0) then
-                v = norm2(x) * e + x
-            else if (x(1) < 0) then
-                v = -norm2(x) * e + x
-            end if
-            v = v / norm2(v)
-            v_transpose = vector_transpose(v)
+            u = A(i+1:n, i) + alpha * ID(i+1:n, i+1) 
+            u = u / norm2( u )
 
-            H(i+1:n, i:n) = H(i+1:n, i:n) - 2 * vec_outer_product(v, matmul(v, H(i+1:n, i:n)))
-            H(1:n, i+1:n) = H(1:n, i+1:n) - 2 * vec_outer_product(matmul(H(1:n, i+1:n), v), v)
+            Q = ID
+            Q(i+1:n, i+1:n) = Q(i+1:n, i+1:n) - 2 * vec_outer_product(u, u)
+            
+            H(i+1:n, i:n) = matmul(Q(i+1:n, i+1:n), A(i+1:n, i:n))
+            H(1:n, i+1:n) = matmul(A(1:n, i+1:n), transpose(Q(i+1:n, i+1:n)) )
 
-            deallocate(x, v, e, v_transpose)
+            deallocate(u)
 
         end do
 
@@ -200,5 +188,32 @@ contains
         v_t(1,:) = v
 
     end function vector_transpose
+
+    pure function inverse_iteration(A, lambda) result(R)
+
+        real, intent(in), dimension(:,:) :: A, lambda
+        real, dimension(size(lambda,1), size(lambda,2)) :: R, temp, ID
+        real, dimension(size(lambda,1)) :: eig_val_list, eig_vec, w
+        integer :: i, k, n
+
+        n = size(lambda,1)
+        ID = 0
+        do i = 1, n
+            eig_val_list(i) = lambda(i,i)
+            ID(i,i) = 1
+        end do
+
+        eig_vec = 1
+        eig_vec = eig_vec / norm2(eig_vec)
+        do i = 1, n
+            temp = A - eig_val_list(i) * ID
+            do k = 1, 1000
+                w = linear_system_solver(temp, eig_vec)
+                eig_vec = w / norm2(w)
+            end do
+            R(:,i) = eig_vec
+        end do
+
+    end function inverse_iteration
 
 end module mod_linalg
