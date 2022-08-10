@@ -1,4 +1,3 @@
-#finally it works...
 FC = gfortran -fcheck=all -g -fbacktrace
 
 main 	= $(wildcard *.f90)

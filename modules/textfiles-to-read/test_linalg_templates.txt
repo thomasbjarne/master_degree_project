@@ -1,0 +1,191 @@
+----------------------
+! test arnoldi_iteration
+
+real, dimension(10,10) :: A
+real, dimension(:,:), allocatable :: Q, H, H_n
+integer(int32) :: i, n = 5
+
+allocate(Q(size(A,1), n+1), H(n+1, n), H_n(n, n))
+
+A = -192
+do i = 1, size(A,2)
+    A(i,i) = 4
+end do
+A(1,2) = 2
+
+call arnoldi_iteration(A, n, Q, H)
+call write_to_file(Q, 1)
+call write_to_file(H, 2)
+
+H_n = H(1:n, 1:n)
+call write_to_file(H_n, 3)
+
+
+---------------------
+! test qr_decomposition
+
+real, dimension(10,10) :: A
+real, dimension(:,:), allocatable :: Q, R
+integer :: i
+
+allocate( Q(size(A,1), size(A,2)), R(size(A,1), size(A,2)) )
+A = -192
+do i = 1, size(A,2)
+    A(i,i) = 4
+end do
+A(1,2) = 2
+
+call qr_decomposition(A, Q, R)
+call write_to_file(Q, 1)
+call write_to_file(R, 2)
+call write_to_file(matmul(Q, R), 3)
+call write_to_file(A, 4)
+
+
+---------------------
+! test qr_algorithm
+
+real, dimension(:,:), allocatable :: A, A_schur
+integer :: i, n = 10
+
+allocate( A(n,n), A_schur(n,n))
+
+A = 7
+do i = 1, n
+    A(i,i) = 4
+end do
+
+A(2, 4) = 2
+A(1, 2) = -5
+A(3, 1) = 29
+
+A_schur = qr_algorithm(A)
+
+call write_to_file(A_schur, 1)
+
+-----------
+! test backwards_subst
+
+real(real32), dimension(:,:), allocatable :: R
+real(real32), dimension(:), allocatable :: b, x  
+integer :: i, n = 3
+
+allocate( R(n,n), b(n), x(n))
+
+R = 0
+do i = 1, n
+    R(i,i:n) = 24
+end do
+R(n,n) = 13
+
+b = 13
+
+x = backwards_subst(R,b)
+
+call write_to_file(x, 1)
+
+-------------
+! test upper_hessenberg
+
+real, dimension(10,10) :: A, H
+integer :: i
+
+A = -192
+do i = 1, size(A,2)
+    A(i,i) = 4
+end do
+A(1,2) = 2
+A(9,2) = 5
+A(9,7) = 2784
+
+H = upper_hessenberg(A)
+
+call write_to_file(H,1)
+
+-----------------------
+! test inverse_iteration
+
+real, dimension(:,:), allocatable :: A, A_schur, lambda, R, AR, lambdaR
+integer :: i, n = 10
+
+allocate( A(n,n), A_schur(n,n), lambda(n,n), R(n,n), AR(n,n), lambdaR(n,n))
+
+A = 9
+do i = 1, n
+    A(i,i) = 4
+end do
+
+!A(2, 4) = 2
+!A(1, 2) = -5
+!A(3, 1) = 29
+
+A_schur = qr_algorithm(A)
+
+call write_to_file(A_schur, 1)
+
+lambda = 0
+do concurrent (i = 1:n)
+    lambda(i,i) = A_schur(i,i)
+end do
+
+R = inverse_iteration(A,lambda)
+
+call write_to_file(R,2)
+
+!Test R(:,i) * lambda(i,i) = A * R(:,i) (verify eigenvec and eigenval)
+do concurrent (i=1:n)
+    AR(:,i) = matmul(A, R(:,i))
+    lambdaR(:,i) = lambda(i,i) * R(:,i)
+end do
+
+call write_to_file(AR, 3)
+call write_to_file(lambdaR, 4)
+
+--------------------------------
+!QR DECOMP V1
+
+pure subroutine qr_decomposition(A, Q, R)
+
+        real, intent(in), dimension(:,:) :: A
+        real, intent(out), dimension(size(A,1), size(A,2)) :: Q, R
+        real, dimension(size(A, 1), size(A,2)) :: ID, A_prime, Q_i
+        real, dimension(:), allocatable :: u
+        real :: alpha
+        integer :: i, n
+
+        n = size(A,1)
+
+        A_prime = A
+        ID = 0
+        do i = 1, n
+            ID(i,i) = 1
+        end do
+
+        do i = 1, n-1
+            allocate( u(n - i + 1) )
+
+            alpha = -norm2( A_prime(i:n,i) )
+            if (A_prime(i,i) < 0) alpha = - alpha
+            
+            u = A_prime(i:n, i) + alpha * ID(i:n, i) 
+            u = u / norm2( u )
+
+            Q_i = ID
+            Q_i(i:n, i:n) = Q_i(i:n, i:n) - 2 * vec_outer_product(u, u)
+
+            A_prime = matmul(Q_i, A_prime)
+
+            if (i == 1) then
+                Q = transpose(Q_i)
+                R = matmul(Q_i, A)
+            else
+                Q = matmul(Q, transpose(Q_i))
+                R = matmul(Q_i, R)
+            end if
+
+            deallocate(u)
+        end do
+
+    end subroutine qr_decomposition
+
+---------------------------------

@@ -24,7 +24,9 @@ contains
             LAMBDA(i,i) = temp(i,i)
         end do
 
-        ! Next use Rayleigh_ritz to approximate eigenvectors
+        ! Next use inverse iteration to approximate eigenvectors
+
+        R = inverse_iteration(A, LAMBDA)
 
         b = q_l - q_r
 
