@@ -10,18 +10,18 @@ contains
         real, intent(in), dimension(:) :: q_l, q_r
         real, intent(in), dimension(:,:) :: A
 
-        real, dimension(size(A,1), size(A, 2)) :: LAMBDA, R, R_inverse, W, temp
+        real, dimension(size(A,1), size(A, 2)) :: LAMBDA, R, R_inverse, W, A_schur
         real, dimension(size(A,1)) :: alpha, b, q
         integer :: i
 
         !we want to solve the linear system R alpha = q_l - q_r, 
         !where R is the matrix of left eigenvectors to A.
 
-        call qr_algorithm(A, temp)  ! approximate eigenvalues
+        A_schur = qr_algorithm(A)  ! approximate eigenvalues
 
         LAMBDA = 0
         do i = 1, size(A,1)
-            LAMBDA(i,i) = temp(i,i)
+            LAMBDA(i,i) = A_schur(i,i)
         end do
 
         ! Next use inverse iteration to approximate eigenvectors
@@ -34,7 +34,7 @@ contains
 
         W(:, i) = alpha(i) * R(:,i)
 
-        q = q_l + sum(H(x(i)) * W(:,i))
+        q = q_l + sum(H(x(i)) * W(:,i)) !write this expression in another way
 
     end function rs_linsys_1d
 

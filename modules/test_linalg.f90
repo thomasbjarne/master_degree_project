@@ -1,45 +1,38 @@
 program test_linalg
 
+    use iso_fortran_env, only: real32, real64
     use mod_linalg
     use mod_io
     implicit none
     
-    ! test inverse_iteration
+    ! test forwards_subst
 
-    real, dimension(:,:), allocatable :: A, A_schur, lambda, R, AR, lambdaR
-    integer :: i, n = 10
+    real(real64), dimension(:,:), allocatable :: L
+    real(real64), dimension(:), allocatable :: b, x
+    integer :: i, n
 
-    allocate( A(n,n), A_schur(n,n), lambda(n,n), R(n,n), AR(n,n), lambdaR(n,n))
+    n = 5
+    allocate( L(n,n), b(n), x(n))
 
-    A = 9
+    L = 0
     do i = 1, n
-        A(i,i) = 4
+        L(i,i) = 2
     end do
+    L(2,1) = -53
+    L(3,1) = 31
+    L(3,2) = -885
+    L(4,1) = 8
+    L(4,2) = 79
+    L(4,3) = -44
 
-    A(2, 4) = 2
-    A(1, 2) = -5
-    A(3, 1) = 29
+    b = 4
+    b(1) = -15
+    b(2) = 42
+    x = forwards_subst(L, b)
 
-    A_schur = qr_algorithm(A)
+    call write_to_file(L, 1)
+    call write_to_file(matmul(L, x), 2)
+    call write_to_file(b, 3)
 
-    call write_to_file(A_schur, 1)
-
-    lambda = 0
-    do concurrent (i = 1:n)
-        lambda(i,i) = A_schur(i,i)
-    end do
-
-    R = inverse_iteration(A,lambda)
-
-    call write_to_file(R,2)
-
-    !Test R(:,i) * lambda(i,i) = A * R(:,i) (verify eigenvec and eigenval)
-    do concurrent (i=1:n)
-        AR(:,i) = matmul(A, R(:,i))
-        lambdaR(:,i) = lambda(i,i) * R(:,i)
-    end do
-
-    call write_to_file(AR, 3)
-    call write_to_file(lambdaR, 4)
 
 end program test_linalg

@@ -8,21 +8,24 @@ temp 	= $(patsubst %.o, obj/%.o, $(objs))
 
 .phony=clean debug all clean_data
 
-all : $(program)
+all : $(program) move
+
+move :
+	@mv $(objs) obj
+	@mv $(program).o obj
 
 $(program) : $(objs)
-	@mv $(objs) obj
-	@$(FC) $(temp) $(program).o -o $@
-	@mv $(program).o obj
+	@$(FC) $(objs) $@.o -o $@
 
 $(objs) : $(mods) $(main)
 	@$(FC) $^ -Jmod -c
+	
 
 clean :
-	@rm -f obj/*.mod obj/*.o mod/*.mod mod/*.o *.mod *.o $(program)
+	@rm -f obj/*.o mod/*.mod mod/*.o *.mod *.o $(program)
 
 clean_data:
-	@rm -f data/*
+	@rm -f data/data*
 
 debug :
 	@echo 'MAIN =' $(main)
