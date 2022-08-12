@@ -36,7 +36,7 @@ module mod_linalg
     end interface inverse_iteration
 
 contains
-! TO FIX : FORWARDS_SUBST, INVERSE_ITERATION(?), LINEAR_SYSTEM_SOLVER (?)
+! TO FIX : INVERSE_ITERATION
 
     pure function identity_matrix(n) result(I)
 
@@ -279,14 +279,14 @@ contains
     pure function forwards_subst_kind32(L, b) result(x)
 
         real(real32), intent(in), dimension(:,:) :: L
-        real(real32), intent(in), dimension(size(L,1)) :: b
-        real(real32), dimension(size(L,1)) :: x
+        real(real32), intent(in), dimension(size(L,2)) :: b
+        real(real32), dimension(size(L,2)) :: x
         integer :: i, n
 
         n = size(x)
         do i = 1, n
             if (i == 1) then
-                x(i) = b(i) / L(i,i)
+                x(i) = ( b(i) ) / L(i,i)
             else
                 x(i) = ( b(i) - dot_product( x(1:i-1), L(i, 1:i-1) ) ) / L(i,i)
             end if
@@ -297,16 +297,16 @@ contains
     pure function forwards_subst_kind64(L, b) result(x)
 
         real(real64), intent(in), dimension(:,:) :: L
-        real(real64), intent(in), dimension(size(L,1)) :: b
-        real(real64), dimension(size(L,1)) :: x
+        real(real64), intent(in), dimension(size(L,2)) :: b
+        real(real64), dimension(size(L,2)) :: x
         integer :: i, n
 
         n = size(x)
         do i = 1, n
             if (i == 1) then
-                x(i) = b(i) / L(i,i)
+                x(i) = ( b(i) ) / L(i,i)
             else
-                x(i) = ( b(i) - dot_product( x(i-1:1), L(i, i-1:1) ) ) / L(i,i)
+                x(i) = ( b(i) - dot_product( x(1:i-1), L(i, 1:i-1) ) ) / L(i,i)
             end if
         end do
 
@@ -345,7 +345,7 @@ contains
             end do
         end do
 
-        y = forwards_subst(L, b)
+        y = forwards_subst(L, matmul(P, b))
         x = backwards_subst(U, y)
 
     end function linear_system_solver_kind32
@@ -357,7 +357,7 @@ contains
         real(real64), intent(in), dimension(:,:) :: A
         real(real64), intent(in), dimension(:) :: b
         real(real64), dimension(size(A,1),size(A,2)) :: L, U, P, temp_u, temp_l, temp_p
-        real(real64), dimension(size(b)) :: x, y, v
+        real(real64), dimension(size(b)) :: x, y
         real(real64) :: alpha
         integer :: k, i, j, n
 
@@ -370,8 +370,7 @@ contains
         temp_p = P
         
         do k = 1, n-1
-            v = U(:, k)
-            i = maxloc( v, dim=1 )
+            i = maxloc( U(:, k), dim=1 )
             U(k, k:n) = U(i, k:n)
             U(i, k:n) = temp_u(k, k:n)
             L(k, 1:k-1) = L(i, 1:k-1)
@@ -387,7 +386,7 @@ contains
             temp_P = P
         end do
 
-        y = forwards_subst(L, b)
+        y = forwards_subst(L, matmul(P,b))
         x = backwards_subst(U, y)
 
     end function linear_system_solver_kind64

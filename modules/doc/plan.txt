@@ -38,7 +38,7 @@ mod_runge_kutta:
     t and u are both optional arguments in F(u,t).
 
 mod_derived_types:
-    Contains pracitcal derived types.
+    Contains practical derived types.
 
 mod_io:
     Contains the subroutine write_to_file which writes input arg to
@@ -52,5 +52,4 @@ mod_parallel:
     this should speed up the runtime of some program.
 
 mod_linalg:
-
     Contains all necessary numerical linear algebra procedures.

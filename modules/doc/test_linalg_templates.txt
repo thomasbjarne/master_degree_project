@@ -165,13 +165,13 @@ call write_to_file(H_n, 3)
     A(1,3) = 0
     A(2,2) = -99
 
-    b = 13
-    b(1) = 2
+    b(1:n) = [(i, i = 1, n)]
 
     x = linear_system_solver(A,b)
-
-    call write_to_file(matmul(A,x), 1)
-    call write_to_file(b, 2)
+    
+    call write_to_file(x, 1)
+    call write_to_file(matmul(A,x), 2)
+    call write_to_file(b, 3)
 
 ---------------------------------
 ! test forwards_subst
@@ -194,9 +194,7 @@ call write_to_file(H_n, 3)
     L(4,2) = 79
     L(4,3) = -44
 
-    b = 4
-    b(1) = -15
-    b(2) = 42
+    b(1:n) = [(i, i = 1,n)] 
     x = forwards_subst(L, b)
 
     call write_to_file(L, 1)
