@@ -36,7 +36,7 @@ module mod_linalg
     end interface inverse_iteration
 
 contains
-! TO FIX : INVERSE_ITERATION
+! TO FIX : INVERSE_ITERATION (!)
 
     pure function identity_matrix(n) result(I)
 
@@ -320,6 +320,7 @@ contains
         real(real32), intent(in), dimension(:) :: b
         real(real32), dimension(size(A,1),size(A,2)) :: L, U, P, temp_u, temp_l, temp_p
         real(real32), dimension(size(b)) :: x, y
+        real(real32) :: alpha
         integer :: k, i, j, n
 
         n = size(A,1)
@@ -357,6 +358,7 @@ contains
         real(real64), intent(in), dimension(:) :: b
         real(real64), dimension(size(A,1),size(A,2)) :: L, U, P, temp_u, temp_l, temp_p
         real(real64), dimension(size(b)) :: x, y
+        real(real64) :: alpha
         integer :: k, i, j, n
 
         n = size(A,1)
@@ -398,19 +400,28 @@ contains
         integer :: i, n
 
         n = size(A,1)
+
         ID = identity_matrix(n)
         H = A
+
         do i = 1, n-2
+
             allocate( u(n - i) )
+
             alpha = norm2( A(i+1:n,i) )
             if (A(i+1,i) < 0) alpha = - alpha
+
             u = A(i+1:n, i) + alpha * ID(i+1:n, i+1) 
             u = u / norm2( u )
+
             Q = ID
             Q(i+1:n, i+1:n) = Q(i+1:n, i+1:n) - 2 * vec_outer_product(u, u)
+            
             H(i+1:n, i:n) = matmul(Q(i+1:n, i+1:n), A(i+1:n, i:n))
             H(1:n, i+1:n) = matmul(A(1:n, i+1:n), transpose(Q(i+1:n, i+1:n)) )
+
             deallocate(u)
+
         end do
 
     end function upper_hessenberg_kind32
@@ -424,19 +435,28 @@ contains
         integer :: i, n
 
         n = size(A,1)
+
         ID = identity_matrix(n)
         H = A
+
         do i = 1, n-2
+
             allocate( u(n - i) )
+
             alpha = norm2( A(i+1:n,i) )
             if (A(i+1,i) < 0) alpha = - alpha
+
             u = A(i+1:n, i) + alpha * ID(i+1:n, i+1) 
             u = u / norm2( u )
+
             Q = ID
             Q(i+1:n, i+1:n) = Q(i+1:n, i+1:n) - 2 * vec_outer_product(u, u)
+            
             H(i+1:n, i:n) = matmul(Q(i+1:n, i+1:n), A(i+1:n, i:n))
             H(1:n, i+1:n) = matmul(A(1:n, i+1:n), transpose(Q(i+1:n, i+1:n)) )
+
             deallocate(u)
+
         end do
 
     end function upper_hessenberg_kind64
@@ -454,6 +474,7 @@ contains
         do i = 1, n
             eig_val_list(i) = lambda(i,i)
         end do
+
         eig_vec = 1
         eig_vec = eig_vec / norm2(eig_vec)
         do i = 1, n
@@ -478,17 +499,17 @@ contains
         n = size(lambda,1)
         ID = identity_matrix(n)
         do i = 1, n
-            eig_val_list(i) = lambda(i,i)
+            eig_val_list(i) = lambda(i,i) + delta
         end do
-        eig_vec = 1
-        eig_vec = eig_vec / norm2(eig_vec)
+
         do i = 1, n
-            temp = A - (eig_val_list(i) + delta) * ID
+            eig_vec(1:n) = [(i*15 + i/37, i=1,n)]
+            temp = A - eig_val_list(i) * ID
             do k = 1, 1000
-                w = linear_system_solver(temp, eig_vec)
-                eig_vec = w / norm2(w)
+                w = eig_vec / norm2(eig_vec)
+                eig_vec = linear_system_solver(temp, w)
             end do
-            R(:,i) = eig_vec
+            R(1:n,i) = eig_vec / norm2(eig_vec)
         end do
 
     end function inverse_iteration_kind64

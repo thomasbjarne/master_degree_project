@@ -2,6 +2,7 @@ FC = gfortran -fcheck=all -g -fbacktrace
 
 main 	= $(wildcard *.f90)
 program = $(patsubst %.f90, %, $(main))
+program_obj = $(patsubst %.f90, %.o, $(main))
 mods 	= $(wildcard mod/mod*.f90)
 objs 	= $(patsubst mod/%.f90, %.o, $(mods))
 temp 	= $(patsubst %.o, obj/%.o, $(objs))
@@ -12,7 +13,7 @@ all : $(program) move
 
 move :
 	@mv $(objs) obj
-	@mv $(program).o obj
+	@mv $(program_obj) obj
 
 $(program) : $(objs)
 	@$(FC) $(objs) $@.o -o $@
@@ -30,6 +31,6 @@ clean_data:
 debug :
 	@echo 'MAIN =' $(main)
 	@echo 'PROGRAM ='$(program)
-	@echo 'MOD = '$(mods)
+	@echo 'MODS = '$(mods)
 	@echo 'OBJS = '$(objs)
 	@echo 'TEMP = '$(temp)
