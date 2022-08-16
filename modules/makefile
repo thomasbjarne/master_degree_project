@@ -24,8 +24,6 @@ $(objs) : $(mods) $(main)
 
 clean :
 	@rm -f obj/*.o mod/*.mod mod/*.o *.mod *.o $(program)
-
-clean_data:
 	@rm -f data/data*
 
 debug :

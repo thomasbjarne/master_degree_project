@@ -27,16 +27,20 @@ module mod_linalg
         module procedure :: forwards_subst_kind32, forwards_subst_kind64
     end interface forwards_subst
 
-    interface linear_system_solver
-        module procedure :: linear_system_solver_kind32, linear_system_solver_kind64
-    end interface linear_system_solver
+    interface gaussian_elim
+        module procedure :: gaussian_elim_kind32, gaussian_elim_kind64
+    end interface gaussian_elim
 
     interface inverse_iteration
         module procedure :: inverse_iteration_kind32, inverse_iteration_kind64
     end interface inverse_iteration
 
+    interface arnoldi_iteration
+        module procedure :: arnoldi_iteration_kind32, arnoldi_iteration_kind64
+    end interface arnoldi_iteration
+
 contains
-! TO FIX : INVERSE_ITERATION (!)
+! TO FIX : FIX EVERYTHING TO ALLOW MORE VERSATILE MATRICES
 
     pure function identity_matrix(n) result(I)
 
@@ -51,14 +55,14 @@ contains
 
     end function identity_matrix
 
-    pure subroutine arnoldi_iteration(A, n, Q, H)
+    pure subroutine arnoldi_iteration_kind32(A, n, Q, H)
 
-        real,    intent(in), dimension(:,:) :: A
+        real(real32),    intent(in), dimension(:,:) :: A
         integer, intent(in) :: n
-        real, intent(out), dimension(size(A,1), n+1) :: Q
-        real, intent(out), dimension(n+1, n) :: H
-        real, dimension(size(A,1)) :: b
-        real :: eps
+        real(real32), intent(out), dimension(size(A,1), n+1) :: Q
+        real(real32), intent(out), dimension(n+1, n) :: H
+        real(real32), dimension(size(A,1)) :: b
+        real(real32) :: eps
         integer :: i, j
 
         b = 1
@@ -82,7 +86,40 @@ contains
             end if
         end do
 
-    end subroutine arnoldi_iteration
+    end subroutine arnoldi_iteration_kind32
+
+    pure subroutine arnoldi_iteration_kind64(A, n, Q, H)
+
+        real(real64),    intent(in), dimension(:,:) :: A
+        integer, intent(in) :: n
+        real(real64), intent(out), dimension(size(A,1), n+1) :: Q
+        real(real64), intent(out), dimension(n+1, n) :: H
+        real(real64), dimension(size(A,1)) :: b
+        real(real64) :: eps
+        integer :: i, j
+
+        b = 1
+        Q = 0
+        H = 0
+        eps = 1e-10
+
+        Q(:, 1) = b/norm2(b)
+        do j = 1, n
+            Q(:,j+1) = matmul(A, Q(:, j))
+            do i = 1, j
+                H(i, j) = dot_product(Q(:,j+1),Q(:,i))
+                Q(:,j+1) = Q(:,j+1) - H(i, j) * Q(:,i)
+            end do
+            H(j+1, j) = norm2(Q(:,j+1))
+            Q(:,j+1) = Q(:,j+1)/H(j+1,j)
+            if (H(j+1,j) < eps) then
+                exit
+            else
+                continue
+            end if
+        end do
+
+    end subroutine arnoldi_iteration_kind64
 
     pure subroutine qr_decomposition_kind32(A, Q, R)
 
@@ -121,17 +158,18 @@ contains
     pure subroutine qr_decomposition_kind64(A, Q, R)
 
         real(real64), intent(in), dimension(:,:) :: A
-        real(real64), intent(out), dimension(size(A,1), size(A,2)) :: Q, R
-        real(real64), dimension(size(A, 1), size(A,2)) :: ID, Q_i
+        real(real64), intent(out), dimension(size(A,1), size(A,2)) :: Q
+        real(real64), intent(out), dimension(size(A,2), size(A,2)) :: R
+        real(real64), dimension(size(A,1), size(A,2)) :: ID, Q_i
         real(real64), dimension(:), allocatable :: u
         real(real64) :: alpha
         integer :: i, n
 
-        n = size(A,1)
+        n = size(A,2)
 
         ID = identity_matrix(n)
         Q = ID
-        R = A
+        R = A(1:n,1:n)
         do i = 1, n
             allocate( u(n - i + 1) )
 
@@ -142,11 +180,10 @@ contains
             if (norm2(u) /= 0) u = u / norm2( u )
 
             Q_i = ID
-            Q_i(i:n, i:n) = Q_i(i:n, i:n) - 2 * vec_outer_product(u,u)
+            Q_i(i:, i:) = Q_i(i:, i:) - 2 * vec_outer_product(u,u)
             
             Q = matmul(Q, transpose(Q_i))
             R(i:n, i:n) = R(i:n, i:n) - 2 * vec_outer_product(u, matmul(u, R(i:n, i:n)))
-
             deallocate(u)
         end do
 
@@ -185,14 +222,14 @@ contains
 
         real(real64), intent(in), dimension(:,:) :: A
         real(real64), dimension(size(A,1), size(A,2)) :: A_schur, A_k, Q_k, R_k
-        real(real64), parameter :: eps = 1e-10
+        real(real64), parameter :: eps = 1e-9
         integer :: i, j, k, n
 
         n = size(A_k, 1)
 
         A_k = upper_hessenberg(A)
 
-        do k = 1, 1000
+        do k = 1, 100
             A_k = A_k - A_k(n, n) * identity_matrix(n)
             call qr_decomposition(A_k, Q_k, R_k)
             A_k = matmul(R_k, Q_k) + A_k(n, n) * identity_matrix(n)
@@ -312,7 +349,7 @@ contains
 
     end function forwards_subst_kind64
 
-    pure function linear_system_solver_kind32(A, b) result(x)
+    pure function gaussian_elim_kind32(A, b) result(x)
 
         !Gaussian elimination with partial pivoting
 
@@ -320,7 +357,6 @@ contains
         real(real32), intent(in), dimension(:) :: b
         real(real32), dimension(size(A,1),size(A,2)) :: L, U, P, temp_u, temp_l, temp_p
         real(real32), dimension(size(b)) :: x, y
-        real(real32) :: alpha
         integer :: k, i, j, n
 
         n = size(A,1)
@@ -348,9 +384,9 @@ contains
         y = forwards_subst(L, matmul(P, b))
         x = backwards_subst(U, y)
 
-    end function linear_system_solver_kind32
+    end function gaussian_elim_kind32
 
-    pure function linear_system_solver_kind64(A, b) result(x)
+    pure function gaussian_elim_kind64(A, b) result(x)
 
         !Gaussian elimination with partial pivoting
 
@@ -358,7 +394,6 @@ contains
         real(real64), intent(in), dimension(:) :: b
         real(real64), dimension(size(A,1),size(A,2)) :: L, U, P, temp_u, temp_l, temp_p
         real(real64), dimension(size(b)) :: x, y
-        real(real64) :: alpha
         integer :: k, i, j, n
 
         n = size(A,1)
@@ -389,7 +424,7 @@ contains
         y = forwards_subst(L, matmul(P,b))
         x = backwards_subst(U, y)
 
-    end function linear_system_solver_kind64
+    end function gaussian_elim_kind64
 
     pure function upper_hessenberg_kind32(A) result(H)
 
@@ -435,7 +470,6 @@ contains
         integer :: i, n
 
         n = size(A,1)
-
         ID = identity_matrix(n)
         H = A
 
@@ -480,7 +514,7 @@ contains
         do i = 1, n
             temp = A - (eig_val_list(i) + delta) * ID
             do k = 1, 1000
-                w = linear_system_solver(temp, eig_vec)
+                !w = linear_system_solver(temp, eig_vec)
                 eig_vec = w / norm2(w)
             end do
             R(:,i) = eig_vec
@@ -492,26 +526,77 @@ contains
 
         real(real64), intent(in), dimension(:,:) :: A, lambda
         real(real64), dimension(size(lambda,1), size(lambda,2)) :: R, temp, ID
-        real(real64), dimension(size(lambda,1)) :: eig_val_list, eig_vec, w
-        real(real64), parameter :: delta = 1e-10
+        real(real64), dimension(size(lambda,1)) :: eig_val, eig_vec, w
+        real(real64), parameter :: delta = 1e-2
         integer :: i, k, n
 
         n = size(lambda,1)
         ID = identity_matrix(n)
         do i = 1, n
-            eig_val_list(i) = lambda(i,i) + delta
+            eig_val(i) = lambda(i,i) + delta
         end do
 
         do i = 1, n
-            eig_vec(1:n) = [(i*15 + i/37, i=1,n)]
-            temp = A - eig_val_list(i) * ID
+            eig_vec(1:n) = [(i, i=1,n)]
+            eig_vec = eig_vec / norm2(eig_vec)
+            temp = A - eig_val(i) * ID
             do k = 1, 1000
-                w = eig_vec / norm2(eig_vec)
-                eig_vec = linear_system_solver(temp, w)
+                eig_vec = gaussian_elim(temp, eig_vec)
+                eig_vec = eig_vec / norm2(eig_vec)
             end do
-            R(1:n,i) = eig_vec / norm2(eig_vec)
+            R(1:n,i) = eig_vec
         end do
 
     end function inverse_iteration_kind64
+
+! the following are not tested and finished yet:
+
+    pure function GMRES(A, b) result(x)
+
+        real(real64), intent(in), dimension(:,:) :: A
+        real(real64), intent(in), dimension(:) :: b
+        real(real64), dimension(:,:), allocatable :: Q, H, temp1, temp2, ID
+        real(real64), dimension(:), allocatable :: x, y, u
+        integer :: i, n
+
+        n = size(b)
+        ID = identity_matrix(n)
+
+        allocate(u(n), x(n), y(n))
+
+        u = b/norm2(b)
+
+        do i = 1, 100
+            allocate( Q(n, i), H(n, i))
+
+            call arnoldi_iteration(A, i, Q, H)
+            call qr_decomposition(H, temp1, temp2)
+            y = least_squares_qr(H, b*ID(i:n, i))
+            x = matmul(Q, y)
+
+            deallocate(Q, H)
+        end do
+
+    end function GMRES
+
+    pure function least_squares_qr(A, b) result(x)
+
+        real(real64), intent(in), dimension(:,:) :: A
+        real(real64), intent(in), dimension(:) :: b
+        real(real64), dimension(:,:), allocatable :: Q, R
+        real(real64), dimension(:), allocatable :: x
+        integer :: i, m, n, k
+
+        m = size(A,1)
+        n = size(A,2)
+
+        allocate( x(n), Q(n, m), R(n,n))
+
+        call qr_decomposition(A, Q, R)
+        x = gaussian_elim(transpose(Q), b)
+        x = matmul(R, x)
+
+    end function least_squares_qr
+
 
 end module mod_linalg

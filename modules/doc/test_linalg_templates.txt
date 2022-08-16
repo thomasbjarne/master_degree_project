@@ -1,24 +1,24 @@
 ----------------------
 ! test arnoldi_iteration
 
-real, dimension(10,10) :: A
-real, dimension(:,:), allocatable :: Q, H, H_n
-integer :: i, n = 5
+    real, dimension(10,10) :: A
+    real, dimension(:,:), allocatable :: Q, H, H_n
+    integer :: i, n = 5
 
-allocate(Q(size(A,1), n+1), H(n+1, n), H_n(n, n))
+    allocate(Q(size(A,1), n+1), H(n+1, n), H_n(n, n))
 
-A = -192
-do i = 1, size(A,2)
-    A(i,i) = 4
-end do
-A(1,2) = 2
+    A = -192
+    do i = 1, size(A,2)
+        A(i,i) = 4
+    end do
+    A(1,2) = 2
 
-call arnoldi_iteration(A, n, Q, H)
-call write_to_file(Q, 1)
-call write_to_file(H, 2)
+    call arnoldi_iteration(A, n, Q, H)
+    call write_to_file(Q, 1)
+    call write_to_file(H, 2)
 
-H_n = H(1:n, 1:n)
-call write_to_file(H_n, 3)
+    H_n = H(1:n, 1:n)
+    call write_to_file(H_n, 3)
 
 
 ---------------------
@@ -112,20 +112,15 @@ call write_to_file(H_n, 3)
 ! test inverse_iteration
 
     real(real64), dimension(:,:), allocatable :: A, A_schur, lambda, R, AR, lambdaR
-    integer :: i, n = 10
+    integer :: i, n = 4
 
     allocate( A(n,n), A_schur(n,n), lambda(n,n), R(n,n), AR(n,n), lambdaR(n,n))
 
-    A = 9
     do i = 1, n
-        A(i,i) = 4
+        A(i,i) = 4*i
     end do
-
-    A(2, 4) = 2
-    A(1, 2) = -5
-    A(3, 1) = 29
-
-    A_schur = qr_algorithm(A)
+ 
+    A_schur = qr_algorithm(A) !QR ALGO BUGGED FOR DIAG MATRICES, FIX
 
     call write_to_file(A_schur, 1)
 
@@ -133,6 +128,8 @@ call write_to_file(H_n, 3)
     do concurrent (i = 1:n)
         lambda(i,i) = A_schur(i,i)
     end do
+
+    lambda = high_to_low_diag(lambda)
 
     R = inverse_iteration(A,lambda)
 
@@ -148,7 +145,7 @@ call write_to_file(H_n, 3)
     call write_to_file(lambdaR, 4)
 
 --------------------------------
-! test linear_system_solver
+! test gaussian_elim
 
     real(real64), dimension(:,:), allocatable :: A
     real(real64), dimension(:), allocatable :: b, x  
@@ -167,7 +164,7 @@ call write_to_file(H_n, 3)
 
     b(1:n) = [(i, i = 1, n)]
 
-    x = linear_system_solver(A,b)
+    x = gaussian_elim(A,b)
     
     call write_to_file(x, 1)
     call write_to_file(matmul(A,x), 2)
@@ -200,3 +197,34 @@ call write_to_file(H_n, 3)
     call write_to_file(L, 1)
     call write_to_file(matmul(L, x), 2)
     call write_to_file(b, 3)
+
+-----------------------------
+
+! test least_squares_qr
+
+    real(real64), dimension(:,:), allocatable :: A, Q, H, R, L, U
+    real(real64), dimension(:), allocatable :: x, b, v
+    integer :: i, m, n, k, j
+
+    m = 10
+    n = 9
+
+    allocate(A(m, n), Q(m,n), R(n,n), x(m), b(m))
+
+    A = 15
+    do i = 1, n
+        do j = 1, m
+            A(j, i) = i*j
+        end do
+    end do
+    A(1:3, 1) = 159
+    A(10, 9) = -5
+
+    call write_to_file(A, 1)
+
+    b = 99
+
+    x = least_squares_qr(A, b)
+
+    call write_to_file(x, 2)
+    call write_to_file(matmul(A, x), 3)
