@@ -1,0 +1,19 @@
+qr_algorithm kladd
+
+
+        real(real64), dimension(:,:), allocatable :: A_k_1, A_k_2, Q_k_1, Q_k_2, R_k_1, R_k_2
+
+allocate( A_k_1(1:i,1:i), Q_k_1(1:i,1:i), &
+                            R_k_1(1:i,1:i), A_k_2(1:n-i, 1:n-i), &
+                            Q_k_2(1:n-i, 1:n-i), R_k_2(1:n-i, 1:n-i) )
+                    do l = 1, 10
+                        A_k_1 = A_k(1:i, 1:i) - A_k(i,i) * identity_matrix(i)
+                        A_k_2 = A_k(i:n, i:n) - A_k(n,n) * identity_matrix(n-i)
+                        call qr_decomposition(A_k_1, Q_k_1, R_k_1)
+                        A_k_1 = matmul(R_k_1, Q_k_1) + A_k(i,i) * identity_matrix(i)
+                        call qr_decomposition(A_k_2, Q_k_2, R_k_2)
+                        A_k_2 = matmul(R_k_2, Q_k_2) + A_k(n,n) * identity_matrix(n-i)
+                    end do
+                    A_k(1:i, 1:i) = A_k_1
+                    A_k(i+1:n, i+1:n) = A_k_2
+                    deallocate(A_k_1, A_k_2, Q_k_1, Q_k_2, R_k_1, R_k_2)

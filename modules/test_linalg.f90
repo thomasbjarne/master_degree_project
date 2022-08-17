@@ -6,24 +6,20 @@ program test_linalg
     use mod_io
     implicit none
     
-! test qr_decomposition
+! test qr_algorithm
 
-    real(real64), dimension(:,:), allocatable :: A, Q, R
+    real(real64), dimension(:,:), allocatable :: A, A_schur
     integer :: i, n = 3
 
-    allocate( A(n+1,n), Q(n+1,n), R(n,n))
+    allocate( A(n,n), A_schur(n,n))
 
-    A = 0
-    do i = 1, n
-        A(i,i) = 4
-    end do
+    A(1,:) = [0, 11, -5]
+    A(2,:) = [-2, 17, -7]
+    A(3,:) = [-4, 26, -10]
 
-    call qr_decomposition(A, Q, R)
+    A_schur = qr_algorithm(A, shift='w')
 
-    call write_to_file(Q, 1)
-    call write_to_file(R, 2)
-    call write_to_file(matmul(Q, R), 3)
-    call write_to_file(A, 4)
+    call write_to_file(A_schur, 1)
 
 
 end program test_linalg
