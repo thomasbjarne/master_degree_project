@@ -32,7 +32,7 @@ program test_linalg
 
     !something goes wrong after this point
 
-    R = inverse_iteration(A,lambda)
+    R = shifted_iteration(A,lambda)
 
     call write_to_file(R,3)
 

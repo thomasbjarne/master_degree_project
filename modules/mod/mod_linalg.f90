@@ -31,9 +31,9 @@ module mod_linalg
         module procedure :: gaussian_elim_kind32, gaussian_elim_kind64
     end interface gaussian_elim
 
-    interface inverse_iteration
-        module procedure :: inverse_iteration_kind32, inverse_iteration_kind64
-    end interface inverse_iteration
+    interface shifted_iteration
+        module procedure :: shifted_iteration_kind32, shifted_iteration_kind64
+    end interface shifted_iteration
 
     interface arnoldi_iteration
         module procedure :: arnoldi_iteration_kind32, arnoldi_iteration_kind64
@@ -57,7 +57,7 @@ contains
 
     pure subroutine arnoldi_iteration_kind32(A, n, Q, H)
 
-        real(real32),    intent(in), dimension(:,:) :: A
+        real(real32), intent(in), dimension(:,:) :: A
         integer, intent(in) :: n
         real(real32), intent(out), dimension(size(A,1), n+1) :: Q
         real(real32), intent(out), dimension(n+1, n) :: H
@@ -78,18 +78,14 @@ contains
             end do
             H(j+1, j) = norm2(Q(:,j+1))
             Q(:,j+1) = Q(:,j+1)/H(j+1,j)
-            if (H(j+1,j) < eps) then
-                exit
-            else
-                continue
-            end if
+            if (H(j+1,j) < eps) exit
         end do
 
     end subroutine arnoldi_iteration_kind32
 
     pure subroutine arnoldi_iteration_kind64(A, n, Q, H)
 
-        real(real64),    intent(in), dimension(:,:) :: A
+        real(real64), intent(in), dimension(:,:) :: A
         integer, intent(in) :: n
         real(real64), intent(out), dimension(size(A,1), n+1) :: Q
         real(real64), intent(out), dimension(n+1, n) :: H
@@ -110,11 +106,7 @@ contains
             end do
             H(j+1, j) = norm2(Q(:,j+1))
             Q(:,j+1) = Q(:,j+1)/H(j+1,j)
-            if (H(j+1,j) < eps) then
-                exit
-            else
-                continue
-            end if
+            if (H(j+1,j) < eps) exit
         end do
 
     end subroutine arnoldi_iteration_kind64
@@ -143,7 +135,8 @@ contains
             Q_i = ID
             Q_i(i:, i:) = Q_i(i:, i:) - 2 * vec_outer_product(u,u)
             Q = matmul(Q, transpose(Q_i))
-            R(i:n, i:n) = R(i:n, i:n) - 2 * vec_outer_product(u, matmul(u, R(i:n, i:n)))
+            R(i:n, i:n) = R(i:n, i:n) - 2 * &
+							vec_outer_product(u, matmul(u, R(i:n, i:n)))
             deallocate(u)
         end do
 
@@ -172,7 +165,8 @@ contains
             Q_i = ID
             Q_i(i:, i:) = Q_i(i:, i:) - 2 * vec_outer_product(u,u)
             Q = matmul(Q, transpose(Q_i))
-            R(i:n, i:n) = R(i:n, i:n) - 2 * vec_outer_product(u, matmul(u, R(i:n, i:n)))
+            R(i:n, i:n) = R(i:n, i:n) - 2 * &
+							vec_outer_product(u, matmul(u, R(i:n, i:n)))
             deallocate(u)
         end do
 
@@ -180,79 +174,68 @@ contains
 
     pure function qr_algorithm_kind32(A) result(A_schur)
 
-        real(real32), intent(in), dimension(:,:) :: A
-        real(real32), dimension(size(A,1), size(A,2)) :: A_schur, A_k, Q_k, R_k
-        real(real32), parameter :: eps = 1e-10
-        real(real32) :: mu, wilkinson_shift, rayleigh_shift, delta, b
-        integer :: i, k, l, n
+		real(real32), intent(in), dimension(:,:) :: A
+		real(real32), dimension(:,:), allocatable :: A_schur, A_k, Q_k, R_k, H
+		real(real32), parameter :: tol = 1e-14
+		real(real32) :: mu
+		integer :: m, n, count
 
-        n = size(A_k, 1)
-        A_k = upper_hessenberg(A)
-        
-        do k = 1, 2500
-            rayleigh_shift = A_k(n,n)
-            delta = ( A_k(n,n) - A_k(n-1,n-1) )/2
-            b = (A_k(n,n-1) * A_k(n-1,n))
-            if (delta > 0) then
-                wilkinson_shift = A_k(n,n) - b /(abs(delta) + sqrt(delta**2 + b))
-            else if (delta <= 0) then
-                wilkinson_shift = A_k(n,n) + b /(abs(delta) + sqrt(delta**2 + b))
-            end if
-            mu = wilkinson_shift
-            A_k = A_k - mu * identity_matrix(n)
-            call qr_decomposition(A_k, Q_k, R_k)
-            A_k = matmul(R_k, Q_k) + mu * identity_matrix(n)
-            do i = 2, n-1
-                if ( A_k(i,i+1) < eps ) then
-                    A_k(i, i+1) = 0
-                    A_k(i+1, i) = 0
-                end if
-            end do
-        end do
-        A_schur = matmul( matmul(transpose(Q_k) , A_k), Q_k )
+		count = 0
+		m = size(A,1)
+		allocate(A_schur(m,m), H(m,m))
+		n = m
+		H = upper_hessenberg(A)
+		do while (n > 1)
+			allocate (A_k(1:n,1:n), Q_k(1:n,1:n), R_k(1:n,1:n))
+			A_k(1:n,1:n) = H(1:n,1:n)
+			do while (maxval(abs(A_k(n, 1:n-1))) > tol .and. count < 1500)
+				count = count + 1
+				mu = A_k(n,n)
+				A_k = A_k - mu*identity_matrix(n)
+				call qr_decomposition(A_k, Q_k, R_k)
+				A_k = matmul(R_k, Q_k) + mu*identity_matrix(n)
+			end do
+			A_schur(1:n,1:n) = A_k
+			n = n - 1
+			deallocate(A_k, Q_k, R_k)
+		end do
 
     end function qr_algorithm_kind32
 
     pure function qr_algorithm_kind64(A) result(A_schur)
 
-        real(real64), intent(in), dimension(:,:) :: A
-        real(real64), dimension(size(A,1), size(A,2)) :: A_schur, A_k, Q_k, R_k
-        real(real64), parameter :: eps = 1e-10
-        real(real64) :: mu, wilkinson_shift, rayleigh_shift, delta, b
-        integer :: i, k, l, n
+		real(real64), intent(in), dimension(:,:) :: A
+		real(real64), dimension(:,:), allocatable :: A_schur, A_k, Q_k, R_k, H
+		real(real64), parameter :: tol = 1e-14
+		real(real64) :: mu
+		integer :: m, n, count
 
-        n = size(A_k, 1)
-        A_k = upper_hessenberg(A)
-        
-        do k = 1, 2500
-            rayleigh_shift = A_k(n,n)
-            delta = ( A_k(n,n) - A_k(n-1,n-1) )/2
-            b = (A_k(n,n-1) * A_k(n-1,n))
-            if (delta > 0) then
-                wilkinson_shift = A_k(n,n) - b /(abs(delta) + sqrt(delta**2 + b))
-            else if (delta <= 0) then
-                wilkinson_shift = A_k(n,n) + b /(abs(delta) + sqrt(delta**2 + b))
-            end if
-            mu = wilkinson_shift
-            A_k = A_k - mu * identity_matrix(n)
-            call qr_decomposition(A_k, Q_k, R_k)
-            A_k = matmul(R_k, Q_k) + mu * identity_matrix(n)
-            do i = 2, n-1
-                if ( A_k(i,i+1) < eps ) then
-                    A_k(i, i+1) = 0
-                    A_k(i+1, i) = 0
-                end if
-            end do
-        end do
-        A_schur = matmul( matmul(transpose(Q_k) , A_k), Q_k )
-
+		count = 0
+		m = size(A,1)
+		allocate(A_schur(m,m), H(m,m))
+		n = m
+		H = upper_hessenberg(A)
+		do while (n > 1)
+			allocate (A_k(1:n,1:n), Q_k(1:n,1:n), R_k(1:n,1:n))
+			A_k(1:n,1:n) = H(1:n,1:n)
+			do while (maxval(abs(A_k(n, 1:n-1))) > tol .and. count < 1500)
+				count = count + 1
+				mu = A_k(n,n)
+				A_k = A_k - mu*identity_matrix(n)
+				call qr_decomposition(A_k, Q_k, R_k)
+				A_k = matmul(R_k, Q_k) + mu*identity_matrix(n)
+			end do
+			A_schur(1:n,1:n) = A_k
+			n = n - 1
+			deallocate(A_k, Q_k, R_k)
+		end do
+		
     end function qr_algorithm_kind64
 
     pure function vec_outer_product_kind32(u, v) result(A)
 
         real(real32), intent(in), dimension(:) :: u, v
         real(real32), dimension(size(u),size(v)) :: A
-
         integer :: i, j
 
         do i = 1, size(u)
@@ -267,7 +250,6 @@ contains
 
         real(real64), intent(in), dimension(:) :: u, v
         real(real64), dimension(size(u),size(v)) :: A
-
         integer :: i, j
 
         do i = 1, size(u)
@@ -354,7 +336,8 @@ contains
 
         real(real32), intent(in), dimension(:,:) :: A
         real(real32), intent(in), dimension(:) :: b
-        real(real32), dimension(size(A,1),size(A,2)) :: L, U, P, temp_u, temp_l, temp_p
+        real(real32), dimension(size(A,1),size(A,2)) :: L, U, P, temp_u, &
+														temp_l, temp_p
         real(real32), dimension(size(b)) :: x, y
         integer :: k, i, j, n
 
@@ -389,7 +372,8 @@ contains
 
         real(real64), intent(in), dimension(:,:) :: A
         real(real64), intent(in), dimension(:) :: b
-        real(real64), dimension(size(A,1),size(A,2)) :: L, U, P, temp_u, temp_l, temp_p
+        real(real64), dimension(size(A,1),size(A,2)) :: L, U, P, temp_u, &
+														temp_l, temp_p
         real(real64), dimension(size(b)) :: x, y
         integer :: k, i, j, n
 
@@ -475,7 +459,7 @@ contains
 
     end function upper_hessenberg_kind64
 
-    pure function inverse_iteration_kind32(A, lambda) result(R)
+    pure function shifted_iteration_kind32(A, lambda) result(R)
 
         real(real32), intent(in), dimension(:,:) :: A, lambda
         real(real32), dimension(size(lambda,1), size(lambda,2)) :: R, ID
@@ -497,9 +481,9 @@ contains
             R(:,i) = eig_vec
         end do
 
-    end function inverse_iteration_kind32
+    end function shifted_iteration_kind32
 
-    pure function inverse_iteration_kind64(A, lambda) result(R)
+    pure function shifted_iteration_kind64(A, lambda) result(R)
 
         real(real64), intent(in), dimension(:,:) :: A, lambda
         real(real64), dimension(size(lambda,1), size(lambda,2)) :: R, ID
@@ -521,7 +505,7 @@ contains
             R(:,i) = eig_vec
         end do
 
-    end function inverse_iteration_kind64
+    end function shifted_iteration_kind64
 
 ! the following are not tested and finished yet:
 

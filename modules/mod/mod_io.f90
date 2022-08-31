@@ -4,10 +4,14 @@ module mod_io
     implicit none
 
     interface write_to_file
-        module procedure :: write_to_file_1d_kind32_real, write_to_file_1d_kind64_real, &
-             write_to_file_2d_kind32_real, write_to_file_2d_kind64_real, &
-             write_to_file_1d_kind16_int, write_to_file_1d_kind8_int, &
-             write_to_file_2d_kind8_int, write_to_file_2d_kind16_int
+        module procedure :: write_to_file_1d_kind32_real, &
+             write_to_file_1d_kind64_real, &
+             write_to_file_2d_kind32_real, &
+             write_to_file_2d_kind64_real, &
+             write_to_file_1d_kind16_int, &
+             write_to_file_1d_kind8_int, &
+             write_to_file_2d_kind8_int, &
+             write_to_file_2d_kind16_int
     end interface write_to_file
 
 contains
