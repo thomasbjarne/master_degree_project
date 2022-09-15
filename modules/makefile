@@ -7,7 +7,7 @@ mods 	= $(wildcard mod/mod*.f90)
 objs 	= $(patsubst mod/%.f90, %.o, $(mods))
 temp 	= $(patsubst %.o, obj/%.o, $(objs))
 
-.phony=clean debug all clean_data
+.phony=clean debug all move
 
 all : $(program) move
 
@@ -23,8 +23,9 @@ $(objs) : $(mods) $(main)
 	
 
 clean :
-	@rm -f obj/*.o mod/*.mod mod/*.o *.mod *.o $(program)
+	@rm -f obj/*.o mod/*.o *.o $(program)
 	@rm -f data/data*
+	@rm -f *.png
 
 debug :
 	@echo 'MAIN =' $(main)

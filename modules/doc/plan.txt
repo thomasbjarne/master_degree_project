@@ -3,7 +3,6 @@ The goal is that they may be used for different types of IBVP.
 
 The modules are:
 
-mod_initial_data
 mod_finite_diff
 mod_runge_kutta
 mod_derived_types
@@ -13,9 +12,6 @@ mod_linalg
 mod_riemann_solver
 
 Details:
-
-mod_initial_data: 
-    Contains a real function of one variable and a real function of two variables.
 
 mod_finite_diff:
     Contains central difference scheme for node function of one variable
@@ -30,12 +26,6 @@ mod_runge_kutta:
     Contains rk4 subroutine for rank 1 arrays and for rank 2 arrays, which provides energy stable time stepping.
 
     The subroutines take in u_0, tmin, tmax, and k (temporal time step).
-
-    Fortran does not allow passing functions as arguments. Therefore the time derivative function F(u, t) is 
-    also included in the module. This allows the rk4 schemes to reference F(u) without interface blocks
-    or other nuances. We found this to be the most flexible setup
-    
-    t and u are both optional arguments in F(u,t).
 
 mod_derived_types:
     Contains practical derived types.

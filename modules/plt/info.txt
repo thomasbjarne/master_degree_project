@@ -1,0 +1,1 @@
+We use gnuplot 5.5 to plot datafiles. The software is freely available online.

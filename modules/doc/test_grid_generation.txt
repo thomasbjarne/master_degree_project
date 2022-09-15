@@ -1,0 +1,52 @@
+-------------------------
+cell-centered-quadrilateral-cells
+
+TEST AREA
+
+	integer, parameter :: n = 10
+	integer :: fileunit, i, j, k
+	type(quadrilateral), dimension(n,n) :: squarecells
+	real, dimension(n+1) :: x, y
+
+	call cell_centered_quadrilateral_grid(0., 10., 0., 10., n, x, y, squarecells)
+
+	
+	
+	open(newunit=fileunit, file='data/datafile1.txt')
+
+	do i = 1, n
+		do j = 1, n
+			write(unit=fileunit, fmt=*) squarecells(i,j) % area
+		end do
+	end do
+
+	close(unit=fileunit)
+
+----------------------------------
+
+cell-centered-quadrilateral-cells
+
+TEST VERTICES
+
+	integer, parameter :: n = 10
+	integer :: fileunit, i, j, k
+	type(quadrilateral), dimension(n,n) :: squarecells
+	real, dimension(n+1) :: x, y
+
+	call cell_centered_quadrilateral_grid(0., 10., 0., 10., n, x, y, squarecells)
+
+	print*, 'Area of cell (n,n) is ', squarecells(n,n) % area
+	
+	open(newunit=fileunit, file='data/datafile1.txt')
+
+	do i = 1, n
+		do j = 1, n
+			do k = 1, 4
+				write(unit=fileunit, fmt=*) squarecells(i,j) % vertices(k,:)
+			end do
+		end do
+	end do
+
+	close(unit=fileunit)
+
+-----------------------------------------

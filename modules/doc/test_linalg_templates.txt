@@ -60,6 +60,8 @@
 
     call write_to_file(A_schur, 1)
 
+	deallocate( A, A_schur )
+
 -----------
 ! test backwards_subst
 
@@ -106,7 +108,7 @@
     call write_to_file(H,1)
 
 -----------------------
-! test inverse_iteration
+! test shifted_iteration
 
     real(real64), dimension(:,:), allocatable :: A, A_schur, lambda, R, AR, lambdaR
     integer :: i, n = 3
@@ -132,7 +134,7 @@
 
     !something goes wrong after this point
 
-    R = inverse_iteration(A,lambda)
+    R = shifted_iteration(A,lambda)
 
     call write_to_file(R,3)
 
@@ -144,8 +146,6 @@
 
     call write_to_file(AR, 4)
     call write_to_file(lambdaR, 5)
-
-
 
 --------------------------------
 ! test gaussian_elim

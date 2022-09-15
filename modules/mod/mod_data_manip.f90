@@ -39,6 +39,8 @@ contains
             A_sorted(i,i) = diag_vec_sorted(i)
         end do
 
+		deallocate( diag_vec, diag_vec_sorted, mask_vec )
+
     end function high_to_low_diag_kind32
 
     pure function high_to_low_diag_kind64(A) result(A_sorted)
@@ -66,6 +68,8 @@ contains
         do i = 1, n
             A_sorted(i,i) = diag_vec_sorted(i)
         end do
+
+		deallocate( diag_vec, diag_vec_sorted, mask_vec )
 
     end function high_to_low_diag_kind64
 
@@ -95,6 +99,8 @@ contains
             A_sorted(i,i) = diag_vec_sorted(i)
         end do
 
+		deallocate( diag_vec, diag_vec_sorted, mask_vec )
+
     end function low_to_high_diag_kind32
 
     pure function low_to_high_diag_kind64(A) result(A_sorted)
@@ -123,6 +129,8 @@ contains
             A_sorted(i,i) = diag_vec_sorted(i)
         end do
 
+		deallocate( diag_vec, diag_vec_sorted, mask_vec )
+		
     end function low_to_high_diag_kind64
 
 

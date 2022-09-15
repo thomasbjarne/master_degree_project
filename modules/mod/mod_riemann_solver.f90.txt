@@ -14,8 +14,7 @@ contains
         real, dimension(size(A,1)) :: alpha, b, q
         integer :: i
 
-        !we want to solve the linear system R alpha = q_l - q_r, 
-        !where R is the matrix of left eigenvectors to A.
+        !we want to solve the linear system R alpha = q_l - q_r
 
         A_schur = qr_algorithm(A)  ! approximate eigenvalues
 

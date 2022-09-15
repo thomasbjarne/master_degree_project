@@ -9,13 +9,20 @@ module mod_runge_kutta
 
 contains
 
-    subroutine rk4_1D(y_0, k, tmin, tmax, y)
+    subroutine rk4_1D(dydt, y_0, k, tmin, tmax, y)
 
         real, intent(in) :: tmin, tmax, k
         real, intent(in), dimension(:) :: y_0
         real, dimension(:), allocatable :: a_1, a_2, a_3, a_4, t
         real, intent(out), dimension(:, :), allocatable :: y
         integer :: i, n
+
+		interface
+			pure function dydt(t,y)
+				real, intent(in), dimension(:), optional :: y
+				real, intent(in), optional :: t
+			end function dydt
+		end interface
 
         n = nint( (tmax - tmin) * k )
         
@@ -34,14 +41,5 @@ contains
 
     end subroutine rk4_1D
 
-    pure function dydt(t, u) result(f)
-
-        real, intent(in), dimension(:) :: u
-        real, intent(in), optional :: t
-        real, dimension(size(u)) :: f
-
-        f = central_diff(u, periodic=.true.)
-
-    end function dydt
 
 end module mod_runge_kutta

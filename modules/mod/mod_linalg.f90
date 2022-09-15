@@ -40,7 +40,7 @@ module mod_linalg
     end interface arnoldi_iteration
 
 contains
-! TO FIX : inverse_iteration, gaussian_elim(?)
+! TO FIX : shifted_iteration, gaussian_elim(?)
 
     pure function identity_matrix(n) result(I)
 
@@ -135,8 +135,7 @@ contains
             Q_i = ID
             Q_i(i:, i:) = Q_i(i:, i:) - 2 * vec_outer_product(u,u)
             Q = matmul(Q, transpose(Q_i))
-            R(i:n, i:n) = R(i:n, i:n) - 2 * &
-							vec_outer_product(u, matmul(u, R(i:n, i:n)))
+            R(i:n, i:n) = R(i:n, i:n) - 2 * vec_outer_product(u, matmul(u, R(i:n, i:n)))
             deallocate(u)
         end do
 
@@ -165,8 +164,7 @@ contains
             Q_i = ID
             Q_i(i:, i:) = Q_i(i:, i:) - 2 * vec_outer_product(u,u)
             Q = matmul(Q, transpose(Q_i))
-            R(i:n, i:n) = R(i:n, i:n) - 2 * &
-							vec_outer_product(u, matmul(u, R(i:n, i:n)))
+            R(i:n, i:n) = R(i:n, i:n) - 2 * vec_outer_product(u, matmul(u, R(i:n, i:n)))
             deallocate(u)
         end do
 
@@ -336,8 +334,7 @@ contains
 
         real(real32), intent(in), dimension(:,:) :: A
         real(real32), intent(in), dimension(:) :: b
-        real(real32), dimension(size(A,1),size(A,2)) :: L, U, P, temp_u, &
-														temp_l, temp_p
+        real(real32), dimension(size(A,1),size(A,2)) :: L, U, P, temp_u, temp_l, temp_p
         real(real32), dimension(size(b)) :: x, y
         integer :: k, i, j, n
 
@@ -372,8 +369,7 @@ contains
 
         real(real64), intent(in), dimension(:,:) :: A
         real(real64), intent(in), dimension(:) :: b
-        real(real64), dimension(size(A,1),size(A,2)) :: L, U, P, temp_u, &
-														temp_l, temp_p
+        real(real64), dimension(size(A,1),size(A,2)) :: L, U, P, temp_u, temp_l, temp_p
         real(real64), dimension(size(b)) :: x, y
         integer :: k, i, j, n
 
@@ -413,7 +409,7 @@ contains
         real(real32), dimension(size(A,1), size(A,2)) :: Q, H, ID
         real(real32), dimension(:), allocatable :: u
         real(real32) :: alpha
-        integer :: i, n
+        integer :: i, n, j
 
         n = size(A,1)
         ID = identity_matrix(n)
@@ -423,7 +419,7 @@ contains
             alpha = norm2( H(i+1:n,i) )
             if (H(i+1,i) < 0) alpha = - alpha
             u = H(i+1:n, i) + alpha * ID(i+1:n, i+1) 
-            if (norm2(u) > 1e-15) u = u / norm2( u )
+            if (norm2(u) /= 0) u = u / norm2( u )
             Q = ID
             Q(i+1:n, i+1:n) = Q(i+1:n, i+1:n) - 2 * vec_outer_product(u, u)
             H(i+1:n, i:n) = matmul(Q(i+1:n, i+1:n), H(i+1:n, i:n))
@@ -439,7 +435,7 @@ contains
         real(real64), dimension(size(A,1), size(A,2)) :: Q, H, ID
         real(real64), dimension(:), allocatable :: u
         real(real64) :: alpha
-        integer :: i, n
+        integer :: i, n, j
 
         n = size(A,1)
         ID = identity_matrix(n)
@@ -449,7 +445,7 @@ contains
             alpha = norm2( H(i+1:n,i) )
             if (H(i+1,i) < 0) alpha = - alpha
             u = H(i+1:n, i) + alpha * ID(i+1:n, i+1) 
-            if (norm2(u) > 1e-15) u = u / norm2( u )
+            if (norm2(u) /= 0) u = u / norm2( u )
             Q = ID
             Q(i+1:n, i+1:n) = Q(i+1:n, i+1:n) - 2 * vec_outer_product(u, u)
             H(i+1:n, i:n) = matmul(Q(i+1:n, i+1:n), H(i+1:n, i:n))
@@ -493,16 +489,16 @@ contains
         n = size(lambda,1)
         ID = identity_matrix(n)
         do i = 1, n
-            alpha(i) = lambda(i,i) + lambda(i,i)*0.002
+            alpha(i) = lambda(i,i) + lambda(i,i)*0.05
         end do
 
         do i = 1, n
-            eig_vec = 1
-            do k = 1, n**2
-                w = gaussian_elim((A - (alpha(i)) * ID), eig_vec)
+            eig_vec(i) = 1
+            do k = 1, 2
+                w = gaussian_elim((A - alpha(i) * ID), eig_vec)
                 eig_vec = w / norm2(w)
             end do
-            R(:,i) = eig_vec
+            R(:,i) = eig_vec / norm2(eig_vec)
         end do
 
     end function shifted_iteration_kind64
