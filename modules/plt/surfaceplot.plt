@@ -1,9 +1,9 @@
-load 'plt/viridis.pal'
+load 'plt/viridispalette.pal'
 
-set terminal pngcairo size 1280,720 enhanced font 'Verdana,12'
+set terminal pngcairo size 1000,1000 enhanced font 'Verdana,14'
 set output 'plt/surfaceplot.png'
 
-datafile='/home/thomasbjarne/fortran/master_thesis/modules/data/datafile1.txt'
+datafile='/home/thomasbjarne/Dokumenter/fortran/master_degree_project/modules/data/datafile1.txt'
 
 set hidden3d
 set view map
@@ -11,12 +11,12 @@ set view map
 unset key
 set size square
 
-set title 'u(x,t) with rk4 and central diff'
+set title 'q(x,t) with naive central flux and rk4'
 
-set xlabel 'x'
-set ylabel 't'
+set xlabel 'index i'
+set ylabel 'time step'
 
-set xtics 0, 0.25, 1
-set ytics 0, 0.25, 1
+set autoscale xfix
+set autoscale yfix
 
-splot datafile nonuniform matrix u 1:2:3 w pm3d
+splot datafile matrix w image

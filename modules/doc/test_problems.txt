@@ -1,3 +1,52 @@
-problem 1
+problem 1 using upwind flux
 
-Let u_t + au_x = 0 and u(x,0) = sin(2pi x) in the domain x = [0,1] periodic bcs.
+    ! We attempt to solve q_t + aq_x = 0,
+    ! with u_0 = sin(2pi*x) and periodic boundary,
+    ! using a simple finite volume method.
+    
+	integer, parameter :: n = 500
+	integer :: fileunit, i, j, k
+	type(quadrilateral), dimension(n,n) :: squarecells
+	real, dimension(0:n) :: x, t
+	real, dimension(1:n) :: vol_avg_q_0
+	real, dimension(:,:), allocatable :: vol_avg_q
+	real, parameter :: pi = 3.14159265358979323846
+	real :: h, a
+
+	a = 1.
+	h = 1./(n)
+	do i = 0, n 
+		x(i) = i*h
+	end do
+	
+	do i = 1, n
+		vol_avg_q_0(i) = (1./(2*pi*h)) * (cos(2*pi*x(i-1)) - cos(2*pi*x(i)))
+	end do
+	
+	call rk4_1D(scheme, vol_avg_q_0, h, 0., 1., vol_avg_q)
+
+	call write_to_file(vol_avg_q, 1)
+
+contains
+
+	pure function scheme(t, y) result(res)
+		
+		real, intent(in), dimension(:) :: y
+		real, intent(in), optional :: t
+		real, dimension(size(y)) :: res
+		integer :: i
+
+		!If a > 0:
+		res(1) = -(a/h)*(y(1) - y(size(y)))
+		do i = 2, size(y)
+			res(i) = -(a/h)*(y(i)-y(i-1))
+		end do
+		
+
+		!If a < 0:
+		!do i = 1, size(y)-1
+		!	res(i) = -(a/h)*(y(i+1) - y(i))
+		!end do
+		!res(size(y)) = -(a/h)*(y(1) - y(size(y)))
+
+	end function scheme

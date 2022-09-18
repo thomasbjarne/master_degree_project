@@ -7,7 +7,7 @@ mods 	= $(wildcard mod/mod*.f90)
 objs 	= $(patsubst mod/%.f90, %.o, $(mods))
 temp 	= $(patsubst %.o, obj/%.o, $(objs))
 
-.phony=clean debug all move
+.phony=clean debug all move splot
 
 all : $(program) move
 
@@ -21,6 +21,11 @@ $(program) : $(objs)
 $(objs) : $(mods) $(main)
 	@$(FC) $^ -Jmod -c
 	
+pplot :
+	@gnuplot plt/pointplot.plt
+
+splot : 
+	@gnuplot plt/surfaceplot.plt
 
 clean :
 	@rm -f obj/*.o mod/*.o *.o $(program)

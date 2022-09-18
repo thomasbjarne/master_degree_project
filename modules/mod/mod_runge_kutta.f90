@@ -1,6 +1,5 @@
 module mod_runge_kutta
 
-    use mod_finite_diff
     implicit none
 
     interface rk4
@@ -9,7 +8,7 @@ module mod_runge_kutta
 
 contains
 
-    subroutine rk4_1D(dydt, y_0, k, tmin, tmax, y)
+    pure subroutine rk4_1D(dydt, y_0, k, tmin, tmax, y)
 
         real, intent(in) :: tmin, tmax, k
         real, intent(in), dimension(:) :: y_0
@@ -18,15 +17,16 @@ contains
         integer :: i, n
 
 		interface
-			pure function dydt(t,y)
-				real, intent(in), dimension(:), optional :: y
+			pure function dydt(t,y) result(res)
+				real, intent(in), dimension(:) :: y
 				real, intent(in), optional :: t
+                real, dimension(size(y)) :: res
 			end function dydt
 		end interface
 
-        n = nint( (tmax - tmin) * k )
+        n = nint((tmax - tmin) / k)
         
-        allocate(a_1(n), a_2(n), a_3(n), a_4(n))
+        allocate(a_1(n), a_2(n), a_3(n), a_4(n), t(n))
         allocate(y(n, size(y_0)))
         y(1, :) = y_0
 

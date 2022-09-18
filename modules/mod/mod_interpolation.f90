@@ -1,15 +1,26 @@
 module mod_interpolation
 
+	use iso_fortran_env, only: real32, real64
 	implicit none
+	
+	interface lagrange_interpolate
+		module procedure :: lagrange_interpolate_kind32, &
+			lagrange_interpolate_kind64
+	end interface lagrange_interpolate
+	
+	interface newton_div_diff_interpolate
+		module procedure :: newton_div_diff_interpolate_kind32, &
+			newton_div_diff_interpolate_kind64
+	end interface newton_div_diff_interpolate
 
 contains
 
-	pure function lagrange_interpolate(pointset, x) result(Lx)
+	pure function lagrange_interpolate_kind32(pointset, x) result(Lx)
 
-		real, intent(in) :: x
-		real, intent(in), dimension(:,:) :: pointset
-		real, dimension(size(pointset,1)) :: basis_val
-		real :: Lx
+		real(real32), intent(in) :: x
+		real(real32), intent(in), dimension(:,:) :: pointset
+		real(real32), dimension(size(pointset,1)) :: basis_val
+		real(real32) :: Lx
 		integer :: i, j, n
 		n = size(pointset, 1)
 		Lx = 0
@@ -23,15 +34,36 @@ contains
 
 		Lx = sum(pointset(1:n,2)*basis_val(1:n))
 
-	end function lagrange_interpolate
+	end function lagrange_interpolate_kind32
+	
+	pure function lagrange_interpolate_kind64(pointset, x) result(Lx)
 
-	pure function newton_div_diff_interpolate(pointset, x) result(Px)
+		real(real64), intent(in) :: x
+		real(real64), intent(in), dimension(:,:) :: pointset
+		real(real64), dimension(size(pointset,1)) :: basis_val
+		real(real64) :: Lx
+		integer :: i, j, n
+		n = size(pointset, 1)
+		Lx = 0
+		basis_val = 1
+		do j = 1, n
+			do i = 1, n
+				if (i == j) cycle
+				basis_val(j) = basis_val(j) * ( (x-pointset(i,1))/(pointset(j,1)-pointset(i,1)) )
+			end do
+		end do
 
-		real, intent(in) :: x
-		real, intent(in), dimension(:,:) :: pointset
-		real :: Px
-		real, dimension(size(pointset,1),size(pointset,1)) :: a
-		real, dimension(size(pointset,1)) :: cofactors
+		Lx = sum(pointset(1:n,2)*basis_val(1:n))
+
+	end function lagrange_interpolate_kind64
+
+	pure function newton_div_diff_interpolate_kind32(pointset, x) result(Px)
+
+		real(real32), intent(in) :: x
+		real(real32), intent(in), dimension(:,:) :: pointset
+		real(real32) :: Px
+		real(real32), dimension(size(pointset,1),size(pointset,1)) :: a
+		real(real32), dimension(size(pointset,1)) :: cofactors
 		integer :: i, j, n
 
 		a = 0
@@ -55,7 +87,39 @@ contains
 			Px = Px + (a(1,i)*cofactors(i))
 		end do
 
-	end function newton_div_diff_interpolate
+	end function newton_div_diff_interpolate_kind32
+	
+	pure function newton_div_diff_interpolate_kind64(pointset, x) result(Px)
+
+		real(real64), intent(in) :: x
+		real(real64), intent(in), dimension(:,:) :: pointset
+		real(real64) :: Px
+		real(real64), dimension(size(pointset,1),size(pointset,1)) :: a
+		real(real64), dimension(size(pointset,1)) :: cofactors
+		integer :: i, j, n
+
+		a = 0
+		n = size(pointset,1)
+		do j = 1, n
+			a(j,1) = pointset(j,2)
+		end do
+
+		do i = 2, n
+			do j = 1, n+1-i
+				a(j,i) = ( a(j+1,i-1) - a(j,i-1) )/( pointset(j+i-1,1)-pointset(j,1) )
+			end do
+		end do
+
+		Px = 0
+		cofactors(1) = 1
+		do i = 2, n
+			cofactors(i) = cofactors(i-1)*(x-pointset(i-1,1))
+		end do
+		do i = 1, n
+			Px = Px + (a(1,i)*cofactors(i))
+		end do
+
+	end function newton_div_diff_interpolate_kind64
 
 	pure function chebyshev_roots(a, b, n) result(roots)
 

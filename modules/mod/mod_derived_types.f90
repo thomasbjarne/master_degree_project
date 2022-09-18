@@ -18,7 +18,7 @@ module mod_derived_types
 		real, dimension(4, 2) :: vertices
 		real :: area
 	end type quadrilateral
-
+	
 	interface triangle
 		module procedure :: triangle_constructor
 	end interface triangle
@@ -26,10 +26,15 @@ module mod_derived_types
 	interface circle
 		module procedure :: circle_constructor
 	end interface circle
+	
+	interface quadrilateral
+		module procedure :: quadrilateral_constructor
+	end interface quadrilateral
 
 contains
 
-	pure type(triangle) function triangle_constructor(index, vertices) result(res)
+	pure type(triangle) function triangle_constructor(index, vertices) &
+	result(res)
 		
 		integer, intent(in) :: index
 		real, intent(in), dimension(3,2) :: vertices
@@ -37,8 +42,9 @@ contains
 		res % index = index
 		res % vertices = vertices
 
-		area = 0.5* abs( (vertices(1,1) - vertices(3,1))*(vertices(2,2)-vertices(1,2)) &
-		- (vertices(1,1) - vertices(2,1)*(vertices(3,2) - vertices(1,2)) )  &
+		area = 0.5* abs( (vertices(1,1) - vertices(3,1)) &
+		* (vertices(2,2)-vertices(1,2))& 
+		- (vertices(1,1) - vertices(2,1)*(vertices(3,2) - vertices(1,2)) ) &
 		)
 
 		res % area = area 
@@ -57,7 +63,8 @@ contains
 
 	end function circle_constructor
 
-	pure type(quadrilateral) function quadrilateral_constructor(index, vertices) result(res)
+	pure type(quadrilateral) function quadrilateral_constructor(index, vertices)&
+	result(res)
 
 		integer, intent(in), dimension(1,2) :: index
 		real, intent(in), dimension(4,2) :: vertices
@@ -66,9 +73,11 @@ contains
 		res % vertices = vertices
 		
 		area = 0.5 * abs ( &
-			(vertices(1,2) + vertices(2,2))*(vertices(1,1) - vertices(2,1)) + (vertices(2,2)+vertices(3,2)) *&
-			(vertices(2,1) - vertices(3,1)) + (vertices(3,2) + vertices(4,2)) * (vertices(3,1)-vertices(4,1)) +&
-			(vertices(4,2) + vertices(1,2)) * (vertices(4,1)-vertices(1,1)) &
+		(vertices(1,2) + vertices(2,2))*(vertices(1,1) &
+		- vertices(2,1)) + (vertices(2,2)+vertices(3,2)) *&
+		(vertices(2,1) - vertices(3,1)) + (vertices(3,2) + vertices(4,2))&
+		* (vertices(3,1)-vertices(4,1)) + (vertices(4,2) + vertices(1,2))&
+		* (vertices(4,1)-vertices(1,1)) &
 		)
 
 		res % area = area
