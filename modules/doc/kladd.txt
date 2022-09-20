@@ -22,13 +22,14 @@ allocate( A_k_1(1:i,1:i), Q_k_1(1:i,1:i), &
 
 
 
-
     pure function naive_central_scheme(t,y) result(res)
 
         real, intent(in), dimension(:) :: y
         real, intent(in), optional :: t
         real, dimension(size(y)) :: res
         integer :: i
+        real, parameter :: a = -1.
+        real, parameter :: h = 1./500
 
         res(1) = -(a/(2*h))*(y(2)-y(size(y)))
         do i = 2, size(y)-1
@@ -44,6 +45,8 @@ allocate( A_k_1(1:i,1:i), Q_k_1(1:i,1:i), &
         real, intent(in), optional :: t
         real, dimension(size(y)) :: res
         integer :: i
+        real, parameter :: a = -1.
+        real, parameter :: h = 1./500
 
         res(1) = -(a/(2*h))*(y(2)-y(size(y))) + (0.5)*(y(2) + y(size(y)))
         do i = 2, size(y)-1
@@ -52,3 +55,11 @@ allocate( A_k_1(1:i,1:i), Q_k_1(1:i,1:i), &
         res(size(y)) = -(a/(2*h))*(y(1)-y(size(y)-1)) + (0.5)*(y(1) + y(size(y)-1))
 
     end function Lax_Friedrichs_scheme
+
+    pure function godunov_scheme(t,y) result(res)
+
+        real, intent(in), dimension(:) :: y
+        real, intent(in), optional :: t
+        real, dimension(size(y)) :: res
+
+    end function godunov_scheme
