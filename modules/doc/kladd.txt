@@ -17,3 +17,38 @@ allocate( A_k_1(1:i,1:i), Q_k_1(1:i,1:i), &
                     A_k(1:i, 1:i) = A_k_1
                     A_k(i+1:n, i+1:n) = A_k_2
                     deallocate(A_k_1, A_k_2, Q_k_1, Q_k_2, R_k_1, R_k_2)
+
+
+
+
+
+
+    pure function naive_central_scheme(t,y) result(res)
+
+        real, intent(in), dimension(:) :: y
+        real, intent(in), optional :: t
+        real, dimension(size(y)) :: res
+        integer :: i
+
+        res(1) = -(a/(2*h))*(y(2)-y(size(y)))
+        do i = 2, size(y)-1
+            res(i) = -(a/(2*h))*(y(i+1)-y(i-1))
+        end do
+        res(size(y)) = -(a/(2*h))*(y(1)-y(size(y)-1))
+
+    end function naive_central_scheme
+
+    pure function Lax_Friedrichs_scheme(t,y) result(res)
+
+        real, intent(in), dimension(:) :: y
+        real, intent(in), optional :: t
+        real, dimension(size(y)) :: res
+        integer :: i
+
+        res(1) = -(a/(2*h))*(y(2)-y(size(y))) + (0.5)*(y(2) + y(size(y)))
+        do i = 2, size(y)-1
+            res(i) = -(a/(2*h))*(y(i+1)-y(i-1)) + (0.5)*(y(i+1)+y(i-1))
+        end do
+        res(size(y)) = -(a/(2*h))*(y(1)-y(size(y)-1)) + (0.5)*(y(1) + y(size(y)-1))
+
+    end function Lax_Friedrichs_scheme

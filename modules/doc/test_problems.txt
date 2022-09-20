@@ -5,9 +5,8 @@ problem 1 using upwind flux
     ! using a simple finite volume method.
     
 	integer, parameter :: n = 500
-	integer :: fileunit, i, j, k
-	type(quadrilateral), dimension(n,n) :: squarecells
-	real, dimension(0:n) :: x, t
+	integer :: i, j, k
+	real, dimension(0:n) :: x
 	real, dimension(1:n) :: vol_avg_q_0
 	real, dimension(:,:), allocatable :: vol_avg_q
 	real, parameter :: pi = 3.14159265358979323846

@@ -11,7 +11,7 @@ set view map
 unset key
 set size square
 
-set title 'q(x,t) with naive central flux and rk4'
+#set title 'q(x,t) with naive central flux and rk4'
 
 set xlabel 'index i'
 set ylabel 'time step'
