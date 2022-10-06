@@ -3,7 +3,7 @@ module mod_finite_volume
     implicit none
 
 contains
-!SEMI DISCRETE SCHEMES
+!SEMI DISCRETE SCHEMES: Args must be t and y to pass the schemes to rk4.
 
     pure function upwind_scheme(t, y) result(res)
             
@@ -150,25 +150,27 @@ contains
     pure function fully_discrete_second_order_LW_scheme_1dsys(h, A, tmin, tmax, Q_0) result(Q)
 
         real, intent(in) :: h, tmin, tmax
-        real, intent(in), dimension(:,:) :: Q_0, A
-        real, dimension(:,:,:), allocatable :: Q
+        real, intent(in), dimension(:,:) :: A
+        real, intent(in), dimension(:) :: Q_0
+        real, dimension(:,:), allocatable :: Q
         real :: k
-        integer :: i, n, j
-        n = size(Q_0,1)
+        integer :: i, n, j, m, r
+        n = size(Q_0)
+        m = size(A,1)
+        r = n/m
         k = abs(tmax - tmin)/n
-        allocate( Q(n, n, size(Q_0,2)) )
+        allocate( Q(n, n) )
 
-        Q(1,:,:) = Q_0(:,:)
+        Q(1, :) = Q_0
         do i = 1, n-1
-            Q(i+1, 1, :) = Q(i, 1, :) - matmul(A, (0.5)*(k/h)*(Q(i, 2, :) - Q(i, n, :))) &
-            + (0.5)*matmul(matmul(A,A), ((k**2)/(h**2))*(Q(i,2, :) - 2*Q(i, 1, :) + Q(i, n, :)))
-
-            do j = 2, n-1
-                Q(i+1, j, :) = Q(i, j, :) - matmul(A, (0.5)*(k/h)*(Q(i, j+1, :) - Q(i, j-1, :))) &
-                + matmul(matmul(A, A), (0.5)*((k**2)/(h**2))*(Q(i, j+1, :) - 2*Q(i, j, :) + Q(i, j-1, :)))
+            Q(i+1, 1:n:r) = Q(i, 1:n:r) - matmul(A, (0.5)*(k/h)*(Q(i, 2:n:r) - Q(i, r:n:r))) &
+            + (0.5)*matmul(matmul(A,A), ((k**2)/(h**2))*(Q(i,2:n:r) - 2*Q(i, 1:n:r) + Q(i, r:n:r)))
+            do j = 2, r-1
+                Q(i+1, j:n:r) = Q(i, j:n:r) - matmul(A, (0.5)*(k/h)*(Q(i, j+1:n:r) - Q(i, (j-1):n:r))) &
+                + matmul(matmul(A, A), (0.5)*((k**2)/(h**2))*(Q(i, (j+1):n:r) - 2*Q(i, j:n:r) + Q(i, (j-1):n:r)))
             end do
-            Q(i+1, n, :) = Q(i, n, :) - matmul(A,(0.5)*(k/h)*(Q(i, 1, :) - Q(i, n-1, :))) &
-            + matmul(matmul(A,A), (0.5)*((k**2)/(h**2))*(Q(i,1, :) - 2*Q(i, n, :) + Q(i, n-1, :)))
+            Q(i+1, r:n:r) = Q(i, r:n:r) - matmul(A,(0.5)*(k/h)*(Q(i, 1:n:r) - Q(i, ((n-1)/m):n:r))) &
+            + matmul(matmul(A,A), (0.5)*((k**2)/(h**2))*(Q(i,1:n:r) - 2*Q(i, r:n:r) + Q(i, ((n-1)/m):n:r)))
         end do
 
     end function fully_discrete_second_order_LW_scheme_1dsys

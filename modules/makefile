@@ -5,9 +5,8 @@ program = $(patsubst %.f90, %, $(main))
 program_obj = $(patsubst %.f90, %.o, $(main))
 mods 	= $(wildcard mod/mod*.f90)
 objs 	= $(patsubst mod/%.f90, %.o, $(mods))
-temp 	= $(patsubst %.o, obj/%.o, $(objs))
 
-.phony=clean debug all move splot
+.phony.=clean debug all move splot pplot
 
 all : $(program) move
 
