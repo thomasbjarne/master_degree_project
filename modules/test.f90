@@ -12,7 +12,7 @@ program test
 	use mod_finite_volume
     implicit none
     
-    ! We attempt to solve q_t + Aq_x = 0, A = diag(1,-1)
+    ! We attempt to solve q_t + Aq_x = 0,
     ! with (q_i)_0 = sin(2pi*x) and periodic boundary,
     ! using a simple finite volume method.
     
