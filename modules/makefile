@@ -19,6 +19,9 @@ $(program) : $(objs)
 
 $(objs) : $(mods) $(main)
 	@$(FC) $^ -Jmod -c
+
+gplot :
+	@gnuplot plt/gridplot.plt
 	
 pplot :
 	@gnuplot plt/pointplot.plt
