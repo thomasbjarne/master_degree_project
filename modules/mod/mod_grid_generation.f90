@@ -104,6 +104,6 @@ contains
 			end do
 		end do
 
-	end subroutine cell_centered_quadrilateral_grid
+	end subroutine cell_centered_quadrilateral
 
 end module mod_grid_generation
