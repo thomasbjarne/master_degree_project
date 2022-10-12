@@ -74,7 +74,7 @@ contains
 
 	end function bowyer_watson
 
-	pure subroutine cell_centered_quadrilateral_grid(xl, xu, yl, yu, n, x, y, squares)
+	pure subroutine cell_centered_quadrilateral(xl, xu, yl, yu, n, x, y, squares)
 
 		real, intent(in) :: xl, xu, yl, yu
 		integer, intent(in) :: n
