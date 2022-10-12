@@ -2,13 +2,20 @@ module mod_derived_types
 
 	implicit none
 
-	type :: triangle
+	type :: line
+		real, dimension(1,2) :: p1 = 0
+		real, dimension(1,2) :: p2 = 0
+		real :: length = 0
+	end type line
+
+	type, extends(line) :: triangle
 		integer :: index = 1
-		real, dimension(3, 2) :: vertices
+		real, dimension(3, 2) :: vertices = 0
 		real, dimension(1, 2) :: center_of_mass = 0
 		real, dimension(1, 2) :: circumcenter = 0
 		real, dimension(3) :: edge_lengths = 0
 		real, dimension(3) :: angles = 0
+		type(line), dimension(3) :: edges = line(0,0)
 		real :: area = 0
 	end type triangle
 
@@ -36,7 +43,21 @@ module mod_derived_types
 		module procedure :: quadrilateral_constructor
 	end interface quadrilateral
 
+	interface line
+		module procedure :: line_constructor
+	end interface line
+
 contains
+
+	pure type(line) function line_constructor(p1, p2) result(res)
+
+		real, intent(in), dimension(1,2) :: p1, p2
+
+		res % p1 = p1
+		res % p2 = p2
+		res % length = norm2(p2-p1)
+
+	end function line_constructor
 
 	pure type(triangle) function triangle_constructor(index, vertices) &
 	result(res)
@@ -45,6 +66,7 @@ contains
 		real, intent(in), dimension(3,2) :: vertices
 		real, dimension(1, 2) :: center_of_mass, circumcenter
 		real, dimension(3) :: edge_lengths, angles
+		type(line), dimension(3) :: edges
 		real :: area
 		res % index = index
 		res % vertices = vertices
@@ -74,6 +96,11 @@ contains
 		vertices(2,2)*sin(2*angles(2)) + vertices(3,2)*sin(2*angles(3)) )/( &
 		sin(2*angles(1)) + sin(2*angles(2)) + sin(2*angles(3)))
 		
+		edges(1) = line_constructor(p1=vertices(1,1:2), p2=vertices(2,1:2))
+		edges(2) = line_constructor(p1=vertices(2,1:2), p2=vertices(3,1:2))
+		edges(3) = line_constructor(p1=vertices(3,1:2), p2=vertices(1,1:2))
+		
+		res % edges = edges
 		res % angles = angles
 		res % edge_lengths = edge_lengths
 		res % circumcenter = circumcenter

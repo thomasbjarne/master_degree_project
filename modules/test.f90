@@ -14,16 +14,16 @@ program test
     
 	!We test our bowyer_watson implementation
 
-	real, dimension(100, 2) :: pointset
-	type(triangle), dimension(size(pointset,1)) :: triangulation
+	real, dimension(20, 2) :: pointset
+	type(triangle), dimension(size(pointset,1)*10) :: triangulation
 	integer :: i, j, fileunit
 
-	do i = 1, 100
-		pointset(i, 1) = i
+	do i = 1, 10
+		pointset(i,1) = i
+		pointset(i+10, 1) = i
 	end do
-	pointset(1:10, 2) = 1
-	pointset(11:30, 2) = 15
-	pointset(31:100,2) = 82
+	pointset(1:10,2) = 1
+	pointset(11:20,2) = 2
 
 	triangulation = bowyer_watson(pointset)
 
