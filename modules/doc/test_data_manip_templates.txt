@@ -20,3 +20,74 @@
 
 ------------------------------------------
 
+! We test the union subroutine: STATUS : WORKING
+	
+	real, dimension(:), allocatable :: set
+	real :: some_float
+
+	allocate(set(3))
+	set = [1., 2., 3.]
+	some_float = 19.14
+
+	print*, set
+	call union_real(some_float, set)
+	print*, set 
+
+-----------------------------------------
+
+!We test in_real: STATUS : WORKS
+
+	real :: a = 2
+	real, dimension(3) :: set
+	logical :: result
+
+	set = 0
+
+	result = in_real(a, set)
+
+	print*, result
+
+--------------------------------------------
+
+!We test in_line: STATUS : WORKS
+
+	type(line) :: a
+	type(line), dimension(3) :: set
+	logical :: result
+
+	a%p1(1,1) = 0
+	a%p1(1,2) = 0
+	a%p2(1,1) = 0
+	a%p2(1,2) = 1
+
+	set = line(0,0)
+	set(2)%p1(1,1) = 0
+	set(2)%p1(1,2) = 0
+	set(2)%p2(1,1) = 0
+	set(2)%p2(1,2) = 1
+
+	result = in_line(a, set)
+
+	print*, result
+
+-------------------------------------
+
+! We test in_triangle : STATUS : WORKING
+
+	type(triangle) :: t
+	type(triangle), dimension(3) :: triangulation
+	logical :: result
+	real, dimension(3,2) :: t_vertices
+
+	t_vertices(:,1) = [0, 1, 2]
+	t_vertices(:,2) = [0, 1, 0]
+
+	t = triangle(vertices=t_vertices)
+
+	triangulation = triangle(vertices=0)
+
+	result = in_triangle(t, triangulation)
+
+	print*, result
+	
+

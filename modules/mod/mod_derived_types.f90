@@ -20,7 +20,9 @@ module mod_derived_types
 	end type triangle
 
 	type :: circle
-		real :: radius, area, circumference
+		real :: radius = 0
+		real :: area = 0
+		real :: circumference = 0
 		real, dimension(1,2) :: center = 0
 	end type circle
 
@@ -62,13 +64,13 @@ contains
 	pure type(triangle) function triangle_constructor(index, vertices) &
 	result(res)
 		
-		integer, intent(in) :: index
+		integer, intent(in), optional :: index
 		real, intent(in), dimension(3,2) :: vertices
-		real, dimension(1, 2) :: center_of_mass, circumcenter
+		real, dimension(1, 2) :: center_of_mass, circumcenter, p1, p2
 		real, dimension(3) :: edge_lengths, angles
 		type(line), dimension(3) :: edges
 		real :: area
-		res % index = index
+		if (present(index)) res % index = index
 		res % vertices = vertices
 		res % center_of_mass(1,1) = sum(vertices(1:3, 1))/3
 		res % center_of_mass(1,2) = sum(vertices(1:3, 2))/3
@@ -96,9 +98,15 @@ contains
 		vertices(2,2)*sin(2*angles(2)) + vertices(3,2)*sin(2*angles(3)) )/( &
 		sin(2*angles(1)) + sin(2*angles(2)) + sin(2*angles(3)))
 		
-		edges(1) = line_constructor(p1=vertices(1,1:2), p2=vertices(2,1:2))
-		edges(2) = line_constructor(p1=vertices(2,1:2), p2=vertices(3,1:2))
-		edges(3) = line_constructor(p1=vertices(3,1:2), p2=vertices(1,1:2))
+		p1(1,1:2)=vertices(1,1:2)
+		p2(1,1:2)=vertices(2,1:2)
+		edges(1) = line_constructor(p1, p2)
+		p1(1,1:2)=vertices(2,1:2)
+		p2(1,1:2)=vertices(3,1:2)
+		edges(2) = line_constructor(p1, p2)
+		p1(1,1:2)=vertices(3,1:2)
+		p2(1,1:2)=vertices(1,1:2)
+		edges(3) = line_constructor(p1, p2)
 		
 		res % edges = edges
 		res % angles = angles

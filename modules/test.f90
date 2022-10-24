@@ -14,17 +14,20 @@ program test
     
 	!We test our bowyer_watson implementation
 
-	real, dimension(20, 2) :: pointset
-	type(triangle), dimension(size(pointset,1)*10) :: triangulation
+	real, dimension(5, 2) :: pointset
+	type(triangle), dimension(:), allocatable :: triangulation
 	integer :: i, j, fileunit
 
-	do i = 1, 10
-		pointset(i,1) = i
-		pointset(i+10, 1) = i
-	end do
-	pointset(1:10,2) = 1
-	pointset(11:20,2) = 2
-
+	pointset(1,1) = 0
+	pointset(1,2) = 0
+	pointset(2,1) = 1
+	pointset(2,2) = 0
+	pointset(3,1) = 1
+	pointset(3,2) = 1
+	pointset(4,1) = 0
+	pointset(4,2) = 1
+	pointset(5,1) = 0.5
+	pointset(5,2) = 0.5
 	triangulation = bowyer_watson(pointset)
 
 	open(newunit=fileunit, file='data/datafile1.txt')
@@ -36,5 +39,6 @@ program test
 	end do
 
 	close(unit=fileunit)
+
 
 end program test
